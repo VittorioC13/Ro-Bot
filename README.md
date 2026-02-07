@@ -27,7 +27,7 @@ A comprehensive web platform that aggregates daily robotics news from major sour
 ## Technology Stack
 
 - **Backend**: Python Flask 3 (serverless on Vercel)
-- **Database**: PostgreSQL
+- **Database**: SQLite (file-based, zero setup required)
 - **AI**: DeepSeek API (OpenAI-compatible)
 - **Web Scraping**: BeautifulSoup4, Requests, Feedparser
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
@@ -75,9 +75,10 @@ robotics-report/
 ### Prerequisites
 
 - Python 3.11+
-- PostgreSQL database
-- DeepSeek API key (get one at https://platform.deepseek.com/)
+- DeepSeek API key: `sk-16e2f4dcccef43d9ad17e66607bf4b82` (already configured!)
 - Git
+
+**No database setup needed!** Uses SQLite (file-based).
 
 ### 1. Clone Repository
 
@@ -92,32 +93,15 @@ cd robotics-report
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment
-
-Copy `.env.example` to `.env` and fill in your credentials:
+### 3. Initialize Database
 
 ```bash
-cp .env.example .env
+python database/init_sqlite.py
 ```
 
-Edit `.env`:
+This creates `robotics.db` file and sets up all tables. That's it - no configuration needed!
 
-```env
-DATABASE_URL=postgresql://user:password@host:5432/robotics_db
-DEEPSEEK_API_KEY=your-deepseek-api-key
-ADMIN_API_KEY=your-secret-admin-key
-FLASK_ENV=development
-```
-
-### 4. Initialize Database
-
-```bash
-python database/init_db.py
-```
-
-This creates all tables and inserts the 10 initial categories.
-
-### 5. Run First Scrape
+### 4. Run First Scrape
 
 ```bash
 python scrapers/scraper_manager.py
@@ -129,7 +113,7 @@ This will:
 - Auto-categorize articles
 - Extract trending topics
 
-### 6. Start Development Server
+### 5. Start Development Server
 
 ```bash
 python api/index.py
@@ -175,43 +159,22 @@ GET /api/admin/status
 
 ## Deployment to Vercel
 
-### 1. Install Vercel CLI
+### Option 1: Quick Deploy (Recommended for SQLite)
 
-```bash
-npm install -g vercel
-```
+1. Push your `robotics.db` file to GitHub (after running initial scrape)
+2. Go to https://vercel.com/new
+3. Import `VittorioC13/Ro-Bot`
+4. Add environment variable:
+   - `DEEPSEEK_API_KEY` = `sk-16e2f4dcccef43d9ad17e66607bf4b82`
+5. Deploy!
 
-### 2. Set Up Database
+**Note**: SQLite on Vercel is read-only after deployment. New articles from GitHub Actions will update the file in your repo.
 
-Create a PostgreSQL database on:
-- [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres)
-- [Neon](https://neon.tech/)
-- [Supabase](https://supabase.com/)
+### Option 2: Use PostgreSQL for Production
 
-### 3. Configure Vercel Secrets
+See `VERCEL_SETUP.md` for full PostgreSQL setup (if you want writable database on Vercel).
 
-```bash
-vercel secrets add database_url "postgresql://..."
-vercel secrets add deepseek_api_key "your-deepseek-key"
-vercel secrets add admin_api_key "your-secret-key"
-```
-
-### 4. Deploy
-
-```bash
-vercel --prod
-```
-
-### 5. Initialize Production Database
-
-After deployment, initialize the database:
-
-```bash
-# Set DATABASE_URL in your local env to production database
-python database/init_db.py
-```
-
-### 6. Set Up GitHub Actions
+### Set Up GitHub Actions
 
 Add these secrets to your GitHub repository (Settings → Secrets):
 
@@ -279,11 +242,11 @@ schedule:
 
 ## Troubleshooting
 
-### Database Connection Issues
+### Database Issues
 
-Ensure DATABASE_URL is correctly formatted:
-```
-postgresql://user:password@host:5432/database_name
+SQLite database file missing:
+```bash
+python database/init_sqlite.py
 ```
 
 ### OpenAI API Errors
@@ -318,11 +281,11 @@ postgresql://user:password@host:5432/database_name
 - Batch process articles
 - Monitor API usage through DeepSeek dashboard
 
-### Database (PostgreSQL)
+### Database (SQLite)
 
-- Vercel Postgres: Free tier available (60 hours compute/month)
-- Neon: Free tier with 0.5GB storage
-- Supabase: Free tier with 500MB database
+- **Free**: No cost, file-based storage
+- **Size**: Typically 5-50MB depending on article count
+- **Storage**: Stored in your GitHub repository
 
 ### Vercel Hosting
 

@@ -29,12 +29,16 @@ jobs:
 
       - name: Run scraper manager
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: sqlite:///./robotics.db
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           echo "Starting daily robotics news scrape..."
           python scrapers/scraper_manager.py
 
-      - name: Log completion
+      - name: Commit updated database
         run: |
-          echo "Daily scrape completed at $(date)"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add robotics.db
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update robotics news database - $(date +%Y-%m-%d)"
+          git push

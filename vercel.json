@@ -29,9 +29,9 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "@database_url",
+    "DATABASE_URL": "sqlite:///./robotics.db",
     "DEEPSEEK_API_KEY": "@deepseek_api_key",
-    "ADMIN_API_KEY": "@admin_api_key",
+    "ADMIN_API_KEY": "ro-bot-admin-345",
     "FLASK_ENV": "production"
   }
 }

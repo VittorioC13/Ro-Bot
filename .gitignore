@@ -41,8 +41,8 @@ ENV/
 *.log
 logs/
 
-# Database
-*.db
+# Database (keep robotics.db in repo for deployment)
+# *.db
 *.sqlite
 *.sqlite3
 
