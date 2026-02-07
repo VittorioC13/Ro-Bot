@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robotics Daily Report</title>
+    <meta name="description" content="Daily aggregation of robotics news from major sources - NVIDIA, IEEE, MIT, TechCrunch, and The Robot Report">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">🤖</span>
+                    Robotics Daily Report
+                </h1>
+                <p class="tagline">Your daily dose of robotics news from leading sources</p>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search robotics news...">
+                <button id="searchBtn" class="search-btn">Search</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="container">
+            <div class="content-wrapper">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <div class="filter-section">
+                        <h3 class="filter-title">Filter by Category</h3>
+                        <div id="categoryFilters" class="filter-group">
+                            <!-- Categories loaded dynamically -->
+                            <div class="filter-loading">Loading categories...</div>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <h3 class="filter-title">Filter by Source</h3>
+                        <div id="sourceFilters" class="filter-group">
+                            <!-- Sources loaded dynamically -->
+                            <div class="filter-loading">Loading sources...</div>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <h3 class="filter-title">Trending Topics</h3>
+                        <div id="trendingTopics" class="trending-list">
+                            <!-- Trending topics loaded dynamically -->
+                            <div class="filter-loading">Loading trends...</div>
+                        </div>
+                    </div>
+
+                    <button id="clearFilters" class="btn-secondary full-width">Clear All Filters</button>
+                </aside>
+
+                <!-- Articles Grid -->
+                <section class="articles-section">
+                    <!-- Stats Bar -->
+                    <div class="stats-bar">
+                        <span id="resultsCount" class="results-count">Loading articles...</span>
+                        <div class="sort-controls">
+                            <label for="sortSelect">Sort by:</label>
+                            <select id="sortSelect" class="sort-select">
+                                <option value="date-desc">Newest First</option>
+                                <option value="date-asc">Oldest First</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Articles Grid -->
+                    <div id="articlesGrid" class="articles-grid">
+                        <!-- Articles loaded dynamically -->
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p>Loading robotics news...</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="pagination" class="pagination">
+                        <!-- Pagination controls loaded dynamically -->
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Robotics Daily Report | Powered by AI</p>
+            <p class="footer-sources">
+                Sources: IEEE Spectrum, MIT News, NVIDIA Blog, TechCrunch, The Robot Report
+            </p>
+        </div>
+    </footer>
+
+    <!-- Article Modal (for detailed view) -->
+    <div id="articleModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div id="modalBody">
+                <!-- Article details loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
