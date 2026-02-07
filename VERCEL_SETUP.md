@@ -7,7 +7,7 @@ This guide will walk you through deploying your Robotics Daily Report system to 
 - GitHub repository pushed (✓ Already done!)
 - Vercel account (sign up at https://vercel.com)
 - PostgreSQL database (we'll set this up)
-- DeepSeek API key: `z5ajcjwbOd8DAjpat2YPh5PzKv84IvRk` (✓ Already configured)
+- DeepSeek API key: `sk-16e2f4dcccef43d9ad17e66607bf4b82` (✓ Already configured)
 
 ## Step 1: Set Up PostgreSQL Database
 
@@ -58,7 +58,7 @@ You have three free options:
 
    ```
    DATABASE_URL = [paste your PostgreSQL connection string]
-   DEEPSEEK_API_KEY = z5ajcjwbOd8DAjpat2YPh5PzKv84IvRk
+   DEEPSEEK_API_KEY = sk-16e2f4dcccef43d9ad17e66607bf4b82
    ADMIN_API_KEY = ro-bot-admin-345
    ```
 
@@ -86,7 +86,7 @@ vercel env add DATABASE_URL
 # Paste your database URL when prompted
 
 vercel env add DEEPSEEK_API_KEY
-# Paste: z5ajcjwbOd8DAjpat2YPh5PzKv84IvRk
+# Paste: sk-16e2f4dcccef43d9ad17e66607bf4b82
 
 vercel env add ADMIN_API_KEY
 # Type: ro-bot-admin-345
@@ -124,7 +124,7 @@ This creates all tables and inserts the 10 robotics categories.
 
    **Secret 2:**
    - Name: `DEEPSEEK_API_KEY`
-   - Value: `z5ajcjwbOd8DAjpat2YPh5PzKv84IvRk`
+   - Value: `sk-16e2f4dcccef43d9ad17e66607bf4b82`
 
 5. GitHub Actions will now run daily at 8 AM UTC to scrape news
 
@@ -227,7 +227,7 @@ After deployment, save these URLs:
 
 ### DeepSeek API
 - Monitor usage at: https://platform.deepseek.com/usage
-- Current key: `z5ajcjwbOd8DAjpat2YPh5PzKv84IvRk`
+- Current key: `sk-16e2f4dcccef43d9ad17e66607bf4b82`
 - Expected cost: ~$6/month for 100 articles/day
 
 ### Vercel
