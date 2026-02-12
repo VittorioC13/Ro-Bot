@@ -1,6 +1,6 @@
-# Robotics Daily Report
+# Robotical
 
-A comprehensive web platform that aggregates daily robotics news from major sources, uses AI to generate summaries and categorize content, and provides an interactive dashboard for exploring the latest developments in robotics.
+A zen, minimalist platform that aggregates daily robotics news from major sources, uses AI to generate summaries and categorize content, and provides a clean interface for exploring the latest developments in robotics.
 
 ## Features
 
