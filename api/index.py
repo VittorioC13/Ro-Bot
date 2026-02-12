@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from dotenv import load_dotenv
 
@@ -30,41 +30,63 @@ app.config['JSON_SORT_KEYS'] = False
 # Enable CORS for all routes
 CORS(app)
 
-# Database setup
-DATABASE_URL = os.getenv('DATABASE_URL')
-if not DATABASE_URL:
-    # Default to SQLite in project root (works for both local and Vercel)
-    # Get absolute path to database file
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(current_dir)
+# Database setup - improved for Vercel
+def get_database_path():
+    """Get the correct database path for current environment"""
+    # First check if DATABASE_URL is set
+    db_url = os.getenv('DATABASE_URL')
+    if db_url and not db_url.startswith('sqlite'):
+        return db_url
+
+    # For SQLite, find the database file
+    # Try current directory first
+    current_dir = os.getcwd()
+    db_path = os.path.join(current_dir, 'robotics.db')
+
+    if os.path.exists(db_path):
+        return f'sqlite:///{db_path}'
+
+    # Try parent of api directory
+    api_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(api_dir)
     db_path = os.path.join(project_root, 'robotics.db')
 
-    # Ensure the path exists
     if os.path.exists(db_path):
-        DATABASE_URL = f'sqlite:///{db_path}'
-        print(f"Using database at: {db_path}")
-    else:
-        print(f"WARNING: Database file not found at {db_path}")
-        DATABASE_URL = f'sqlite:///{db_path}'  # Try anyway
+        return f'sqlite:///{db_path}'
+
+    # Try relative path
+    db_path = os.path.abspath('robotics.db')
+    if os.path.exists(db_path):
+        return f'sqlite:///{db_path}'
+
+    # Last resort - return the path anyway
+    return f'sqlite:///{db_path}'
 
 try:
-    # For SQLite, use check_same_thread=False for serverless compatibility
-    if DATABASE_URL and DATABASE_URL.startswith('sqlite'):
+    DATABASE_URL = get_database_path()
+    print(f"[INFO] Using database: {DATABASE_URL}")
+
+    # Create engine with appropriate settings
+    if DATABASE_URL.startswith('sqlite'):
         engine = create_engine(
             DATABASE_URL,
             connect_args={'check_same_thread': False},
             pool_pre_ping=True,
             echo=False
         )
-    elif DATABASE_URL:
-        engine = create_engine(DATABASE_URL, pool_pre_ping=True)
     else:
-        raise Exception("No database URL configured")
+        engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
     SessionLocal = scoped_session(sessionmaker(bind=engine))
-    print("Database connection established successfully")
+
+    # Test the connection
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT COUNT(*) FROM articles"))
+        count = result.scalar()
+        print(f"[INFO] Database connected successfully. Articles: {count}")
+
 except Exception as e:
-    print(f"Database connection error: {e}")
+    print(f"[ERROR] Database connection failed: {e}")
     import traceback
     traceback.print_exc()
     engine = None
@@ -75,7 +97,7 @@ except Exception as e:
 def get_db():
     """Create database session for each request"""
     if not SessionLocal:
-        raise Exception("Database not configured. Please set DATABASE_URL in environment variables.")
+        raise Exception("Database not configured")
     db = SessionLocal()
     try:
         return db
@@ -101,46 +123,48 @@ def index():
         'version': '1.0.0',
         'description': 'Daily aggregation of robotics news from major sources',
         'endpoints': {
+            'health': '/api/health',
             'articles': '/api/articles',
             'article_detail': '/api/articles/<id>',
             'search': '/api/search?q=<query>',
             'categories': '/api/categories',
             'trending': '/api/trending',
-            'sources': '/api/sources',
-            'admin_scrape': '/api/admin/scrape'
+            'sources': '/api/sources'
         },
-        'documentation': 'https://github.com/yourusername/robotics-report',
         'status': 'operational'
     })
 
 
 @app.route('/api/health')
 def health():
-    """Health check endpoint"""
+    """Health check endpoint with diagnostics"""
     db_status = 'not_configured'
     article_count = 0
-    db_path_info = None
+    db_info = {}
 
-    if SessionLocal:
-        try:
+    try:
+        if SessionLocal:
             db = SessionLocal()
-            # Try to query the database
-            result = db.execute("SELECT COUNT(*) FROM articles")
-            article_count = result.fetchone()[0]
-            db_status = 'connected'
+            result = db.execute(text("SELECT COUNT(*) FROM articles"))
+            article_count = result.scalar()
             db.close()
-        except Exception as e:
-            db_status = f'error: {str(e)}'
+            db_status = 'connected'
+    except Exception as e:
+        db_status = f'error: {str(e)}'
 
-    # Get database file path
-    if DATABASE_URL:
-        db_path_info = DATABASE_URL
+    # Gather diagnostic info
+    db_info = {
+        'DATABASE_URL': DATABASE_URL if 'DATABASE_URL' in globals() else 'not set',
+        'cwd': os.getcwd(),
+        'files_in_cwd': os.listdir(os.getcwd())[:20],  # First 20 files
+        'db_file_exists': os.path.exists('robotics.db'),
+    }
 
     return jsonify({
-        'status': 'healthy',
+        'status': 'healthy' if db_status == 'connected' else 'degraded',
         'database': db_status,
-        'database_url': db_path_info,
         'article_count': article_count,
+        'diagnostics': db_info,
         'timestamp': datetime.utcnow().isoformat()
     })
 
@@ -168,6 +192,10 @@ def internal_error(error):
 @app.errorhandler(Exception)
 def handle_exception(error):
     """Handle all other exceptions"""
+    print(f"[ERROR] Unhandled exception: {error}")
+    import traceback
+    traceback.print_exc()
+
     return jsonify({
         'error': 'Internal Server Error',
         'message': str(error),
@@ -184,5 +212,4 @@ if __name__ == '__main__':
 
 
 # Vercel requires the app object to be available at module level
-# This is the handler Vercel will use
 handler = app
