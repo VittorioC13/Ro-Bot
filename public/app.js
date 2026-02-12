@@ -83,7 +83,7 @@ function renderCategories() {
                    id="cat-${cat.id}"
                    value="${cat.name}"
                    onchange="toggleCategory('${cat.name}')">
-            <label for="cat-${cat.id}">${cat.icon} ${cat.name} (${cat.article_count})</label>
+            <label for="cat-${cat.id}">${cat.name}</label>
         </div>
     `).join('');
 }

@@ -39,7 +39,7 @@ def init_database():
         # Create all tables
         print("Creating tables...")
         Base.metadata.create_all(engine)
-        print("✓ All tables created successfully")
+        print("OK All tables created successfully")
 
         # Create session
         Session = sessionmaker(bind=engine)
@@ -48,7 +48,7 @@ def init_database():
         # Check if categories already exist
         existing_count = session.query(Category).count()
         if existing_count > 0:
-            print(f"\n✓ Database already initialized with {existing_count} categories")
+            print(f"\nOK Database already initialized with {existing_count} categories")
             session.close()
             return True
 
@@ -58,52 +58,52 @@ def init_database():
             {
                 'name': 'Humanoid Robots',
                 'description': 'Human-like robots with bipedal locomotion and anthropomorphic features',
-                'icon': '🤖'
+                'icon': ''
             },
             {
                 'name': 'Drones & Aerial Systems',
                 'description': 'Unmanned aerial vehicles and flying robotics platforms',
-                'icon': '🚁'
+                'icon': ''
             },
             {
                 'name': 'Industrial Automation',
                 'description': 'Manufacturing robots, robotic arms, and factory automation systems',
-                'icon': '🏭'
+                'icon': ''
             },
             {
                 'name': 'AGVs & AMRs',
                 'description': 'Autonomous Guided Vehicles and Autonomous Mobile Robots for logistics',
-                'icon': '📦'
+                'icon': ''
             },
             {
                 'name': 'AI & Software',
                 'description': 'Artificial intelligence, machine learning, and robotics software platforms',
-                'icon': '🧠'
+                'icon': ''
             },
             {
                 'name': 'Research & Academia',
                 'description': 'Academic research, university projects, and scientific breakthroughs',
-                'icon': '🔬'
+                'icon': ''
             },
             {
                 'name': 'Business & Funding',
                 'description': 'Investment rounds, acquisitions, IPOs, and financial news',
-                'icon': '💰'
+                'icon': ''
             },
             {
                 'name': 'Healthcare Robotics',
                 'description': 'Medical robots, surgical systems, and healthcare automation',
-                'icon': '⚕️'
+                'icon': ''
             },
             {
                 'name': 'Agricultural Robotics',
                 'description': 'Farming automation, crop monitoring, and agricultural robots',
-                'icon': '🌾'
+                'icon': ''
             },
             {
                 'name': 'Consumer Robotics',
                 'description': 'Home robots, entertainment bots, and consumer-facing products',
-                'icon': '🏠'
+                'icon': ''
             }
         ]
 
@@ -113,7 +113,7 @@ def init_database():
             print(f"  + Added: {cat_data['name']}")
 
         session.commit()
-        print("\n✓ Database initialization completed successfully!")
+        print("\nOK Database initialization completed successfully!")
 
         # Display summary
         category_count = session.query(Category).count()
@@ -125,7 +125,7 @@ def init_database():
         return True
 
     except Exception as e:
-        print(f"\n✗ ERROR: Database initialization failed")
+        print(f"\nERROR ERROR: Database initialization failed")
         print(f"Error details: {str(e)}")
         return False
 
