@@ -5,7 +5,7 @@
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "includeFiles": ["robotics.db", "database/**", "ai_processor/**", "scrapers/**"]
+        "includeFiles": ["data.json", "robotics.db", "database/**", "ai_processor/**", "scrapers/**", "api/json_data.py"]
       }
     },
     {
