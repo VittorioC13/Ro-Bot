@@ -4,10 +4,6 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -24,14 +20,12 @@
       "dest": "public/app.js"
     },
     {
+      "src": "/assets/(.*)",
+      "dest": "public/assets/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "public/index.html"
     }
-  ],
-  "env": {
-    "DATABASE_URL": "sqlite:///./robotics.db",
-    "DEEPSEEK_API_KEY": "@deepseek_api_key",
-    "ADMIN_API_KEY": "ro-bot-admin-345",
-    "FLASK_ENV": "production"
-  }
+  ]
 }

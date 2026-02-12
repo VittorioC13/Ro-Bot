@@ -33,11 +33,18 @@ CORS(app)
 # Database setup
 DATABASE_URL = os.getenv('DATABASE_URL')
 if not DATABASE_URL:
-    print("WARNING: DATABASE_URL not set. Please configure your .env file.")
+    # Default to SQLite in project root (works for both local and Vercel)
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'robotics.db')
+    DATABASE_URL = f'sqlite:///{db_path}'
+    print(f"Using default database at: {db_path}")
 
 try:
-    engine = create_engine(DATABASE_URL) if DATABASE_URL else None
-    SessionLocal = scoped_session(sessionmaker(bind=engine)) if engine else None
+    # For SQLite, use check_same_thread=False for serverless compatibility
+    if DATABASE_URL.startswith('sqlite'):
+        engine = create_engine(DATABASE_URL, connect_args={'check_same_thread': False})
+    else:
+        engine = create_engine(DATABASE_URL)
+    SessionLocal = scoped_session(sessionmaker(bind=engine))
 except Exception as e:
     print(f"Database connection error: {e}")
     engine = None
