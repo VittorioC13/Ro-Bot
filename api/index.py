@@ -34,19 +34,39 @@ CORS(app)
 DATABASE_URL = os.getenv('DATABASE_URL')
 if not DATABASE_URL:
     # Default to SQLite in project root (works for both local and Vercel)
-    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'robotics.db')
-    DATABASE_URL = f'sqlite:///{db_path}'
-    print(f"Using default database at: {db_path}")
+    # Get absolute path to database file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    db_path = os.path.join(project_root, 'robotics.db')
+
+    # Ensure the path exists
+    if os.path.exists(db_path):
+        DATABASE_URL = f'sqlite:///{db_path}'
+        print(f"Using database at: {db_path}")
+    else:
+        print(f"WARNING: Database file not found at {db_path}")
+        DATABASE_URL = f'sqlite:///{db_path}'  # Try anyway
 
 try:
     # For SQLite, use check_same_thread=False for serverless compatibility
-    if DATABASE_URL.startswith('sqlite'):
-        engine = create_engine(DATABASE_URL, connect_args={'check_same_thread': False})
+    if DATABASE_URL and DATABASE_URL.startswith('sqlite'):
+        engine = create_engine(
+            DATABASE_URL,
+            connect_args={'check_same_thread': False},
+            pool_pre_ping=True,
+            echo=False
+        )
+    elif DATABASE_URL:
+        engine = create_engine(DATABASE_URL, pool_pre_ping=True)
     else:
-        engine = create_engine(DATABASE_URL)
+        raise Exception("No database URL configured")
+
     SessionLocal = scoped_session(sessionmaker(bind=engine))
+    print("Database connection established successfully")
 except Exception as e:
     print(f"Database connection error: {e}")
+    import traceback
+    traceback.print_exc()
     engine = None
     SessionLocal = None
 
@@ -97,11 +117,30 @@ def index():
 @app.route('/api/health')
 def health():
     """Health check endpoint"""
-    db_status = 'connected' if SessionLocal else 'not_configured'
+    db_status = 'not_configured'
+    article_count = 0
+    db_path_info = None
+
+    if SessionLocal:
+        try:
+            db = SessionLocal()
+            # Try to query the database
+            result = db.execute("SELECT COUNT(*) FROM articles")
+            article_count = result.fetchone()[0]
+            db_status = 'connected'
+            db.close()
+        except Exception as e:
+            db_status = f'error: {str(e)}'
+
+    # Get database file path
+    if DATABASE_URL:
+        db_path_info = DATABASE_URL
 
     return jsonify({
         'status': 'healthy',
         'database': db_status,
+        'database_url': db_path_info,
+        'article_count': article_count,
         'timestamp': datetime.utcnow().isoformat()
     })
 
