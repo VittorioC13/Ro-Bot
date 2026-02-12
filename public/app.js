@@ -476,10 +476,6 @@ function openArticleModal(articleId) {
 
     if (!selectedArticle) return;
 
-    // Populate modal
-    document.getElementById('modalTitle').textContent = selectedArticle.title;
-    document.getElementById('modalSource').textContent = `${selectedArticle.source} • ${formatDate(selectedArticle.published_date)}`;
-
     // Show modal
     document.getElementById('articleModal').classList.add('active');
     document.body.style.overflow = 'hidden';
