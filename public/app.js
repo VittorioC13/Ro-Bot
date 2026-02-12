@@ -68,6 +68,50 @@ function setupEventListeners() {
 
     // Clear Filters
     document.getElementById('clearFilters').addEventListener('click', clearFilters);
+
+    // Modal event listeners
+    setupModalListeners();
+}
+
+function setupModalListeners() {
+    // Close modal on backdrop click
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.addEventListener('click', () => {
+            closeArticleModal();
+            closeBriefModal();
+        });
+    });
+
+    // Close modal on X click
+    document.querySelectorAll('.modal-close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', () => {
+            closeArticleModal();
+            closeBriefModal();
+        });
+    });
+
+    // Read brief option
+    document.getElementById('readBrief').addEventListener('click', openBriefView);
+
+    // Visit original option
+    document.getElementById('visitOriginal').addEventListener('click', () => {
+        if (selectedArticle) {
+            window.open(selectedArticle.url, '_blank');
+            closeArticleModal();
+        }
+    });
+
+    // Brief modal buttons
+    document.getElementById('visitFromBrief').addEventListener('click', visitOriginalFromBrief);
+    document.getElementById('closeBrief').addEventListener('click', closeBriefModal);
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeArticleModal();
+            closeBriefModal();
+        }
+    });
 }
 
 // API Calls
@@ -236,6 +280,9 @@ function renderArticles() {
     container.innerHTML = state.articles.map(article => createArticleCard(article)).join('');
 }
 
+// Store currently selected article
+let selectedArticle = null;
+
 function createArticleCard(article) {
     const date = article.published_date ?
         new Date(article.published_date).toLocaleDateString('en-US', {
@@ -257,8 +304,11 @@ function createArticleCard(article) {
         `<p class="article-summary">${article.summary}</p>` :
         (article.excerpt ? `<p class="article-summary">${truncate(article.excerpt, 200)}</p>` : '');
 
+    // Create a unique ID for the article
+    const articleId = article.id || article.url;
+
     return `
-        <article class="article-card" onclick="openArticle('${article.url}')">
+        <article class="article-card" data-article-id="${articleId}" onclick="openArticleModal(${articleId})">
             ${imageHtml}
             <div class="article-content">
                 <div class="article-meta">
@@ -268,11 +318,6 @@ function createArticleCard(article) {
                 <h2 class="article-title">${article.title}</h2>
                 ${summaryHtml}
                 ${categoriesHtml}
-                <div class="article-footer">
-                    <a href="${article.url}" target="_blank" class="read-more" onclick="event.stopPropagation()">
-                        Read Full Article →
-                    </a>
-                </div>
             </div>
         </article>
     `;
@@ -423,3 +468,90 @@ function truncate(text, maxLength) {
 function openArticle(url) {
     window.open(url, '_blank');
 }
+
+// Modal handling
+function openArticleModal(articleId) {
+    // Find the article from state
+    selectedArticle = state.allArticles.find(a => a.id === articleId);
+
+    if (!selectedArticle) return;
+
+    // Populate modal
+    document.getElementById('modalTitle').textContent = selectedArticle.title;
+    document.getElementById('modalSource').textContent = `${selectedArticle.source} • ${formatDate(selectedArticle.published_date)}`;
+
+    // Show modal
+    document.getElementById('articleModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeArticleModal() {
+    document.getElementById('articleModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+function openBriefView() {
+    if (!selectedArticle) return;
+
+    // Build brief content
+    const categories = selectedArticle.categories && selectedArticle.categories.length > 0
+        ? `<div class="category-list">
+            ${selectedArticle.categories.map(cat => `<span class="category-item">${cat}</span>`).join('')}
+        </div>`
+        : '';
+
+    const summary = selectedArticle.summary || 'No AI-generated summary available for this article.';
+
+    const briefHTML = `
+        <h2 class="modal-title">${selectedArticle.title}</h2>
+        <div class="brief-meta">
+            <span>${selectedArticle.source}</span>
+            <span>•</span>
+            <span>${formatDate(selectedArticle.published_date)}</span>
+        </div>
+        ${categories}
+        <div class="brief-summary">
+            <h3>AI-Generated Brief</h3>
+            <p>${summary}</p>
+        </div>
+        ${selectedArticle.excerpt ? `
+            <h3>Article Preview</h3>
+            <p>${truncate(stripHTML(selectedArticle.excerpt), 400)}</p>
+        ` : ''}
+    `;
+
+    document.getElementById('briefContent').innerHTML = briefHTML;
+
+    // Close article modal and open brief modal
+    closeArticleModal();
+    document.getElementById('briefModal').classList.add('active');
+}
+
+function closeBriefModal() {
+    document.getElementById('briefModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+function visitOriginalFromBrief() {
+    if (selectedArticle) {
+        window.open(selectedArticle.url, '_blank');
+        closeBriefModal();
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Recent';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+function stripHTML(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+}
+

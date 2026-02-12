@@ -99,12 +99,39 @@
         </div>
     </footer>
 
-    <!-- Article Modal (for detailed view) -->
-    <div id="articleModal" class="modal">
+    <!-- Article Options Modal -->
+    <div id="articleModal" class="modal-overlay">
+        <div class="modal-backdrop"></div>
         <div class="modal-content">
             <span class="modal-close">&times;</span>
-            <div id="modalBody">
-                <!-- Article details loaded here -->
+            <h2 class="modal-title" id="modalTitle"></h2>
+            <p class="modal-source" id="modalSource"></p>
+
+            <div class="modal-options">
+                <div class="option-card" id="readBrief">
+                    <h3>Read AI Brief</h3>
+                    <p>Quick summary and key insights</p>
+                </div>
+
+                <div class="option-card" id="visitOriginal">
+                    <h3>Visit Original Article</h3>
+                    <p>Read the full story at source</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Brief View Modal -->
+    <div id="briefModal" class="modal-overlay">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-wide">
+            <span class="modal-close">&times;</span>
+            <div id="briefContent">
+                <!-- Brief content loaded here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" id="visitFromBrief">Visit Original Article</button>
+                <button class="btn-secondary" id="closeBrief">Close</button>
             </div>
         </div>
     </div>
