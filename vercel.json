@@ -15,6 +15,14 @@
   ],
   "routes": [
     {
+      "src": "/api/data.json",
+      "dest": "/data.json",
+      "headers": {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.py"
     },

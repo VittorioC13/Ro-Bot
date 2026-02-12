@@ -13,7 +13,9 @@ const state = {
     categories: [],
     sources: [],
     trending: [],
-    totalPages: 1
+    totalPages: 1,
+    allArticles: [],  // Store all articles for client-side filtering
+    allData: null    // Store the entire dataset
 };
 
 // Initialize App
@@ -22,7 +24,31 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+async function loadDataFile() {
+    /**Load the static data.json file */
+    try {
+        const response = await fetch('/data.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        state.allData = await response.json();
+        state.allArticles = state.allData.articles || [];
+        return true;
+    } catch (error) {
+        console.error('Error loading data file:', error);
+        return false;
+    }
+}
+
 async function initializeApp() {
+    // Load the data file first
+    const loaded = await loadDataFile();
+    if (!loaded) {
+        showError();
+        return;
+    }
+
+    // Load UI components
     await Promise.all([
         loadCategories(),
         loadSources(),
@@ -61,12 +87,18 @@ async function fetchAPI(endpoint) {
 
 // Load Categories
 async function loadCategories() {
-    const data = await fetchAPI('/api/data/categories');
+    if (!state.allData) return;
 
-    if (data && data.success) {
-        state.categories = data.data.categories;
-        renderCategories();
+    state.categories = state.allData.categories || [];
+
+    // Count articles per category
+    for (const cat of state.categories) {
+        cat.article_count = state.allArticles.filter(a =>
+            (a.categories || []).includes(cat.name)
+        ).length;
     }
+
+    renderCategories();
 }
 
 function renderCategories() {
@@ -90,12 +122,10 @@ function renderCategories() {
 
 // Load Sources
 async function loadSources() {
-    const data = await fetchAPI('/api/data/sources');
+    if (!state.allData) return;
 
-    if (data && data.success) {
-        state.sources = data.data.sources;
-        renderSources();
-    }
+    state.sources = state.allData.sources || [];
+    renderSources();
 }
 
 function renderSources() {
@@ -119,12 +149,10 @@ function renderSources() {
 
 // Load Trending
 async function loadTrending() {
-    const data = await fetchAPI('/api/data/trending?limit=10');
+    if (!state.allData) return;
 
-    if (data && data.success) {
-        state.trending = data.data.trending_topics;
-        renderTrending();
-    }
+    state.trending = (state.allData.trending || []).slice(0, 10);
+    renderTrending();
 }
 
 function renderTrending() {
@@ -147,46 +175,49 @@ function renderTrending() {
 async function loadArticles() {
     showLoading();
 
-    // Build query parameters
-    const params = new URLSearchParams({
-        page: state.currentPage,
-        limit: 12
-    });
-
-    // Add filters
-    if (state.selectedCategories.length > 0) {
-        params.append('category', state.selectedCategories[0]); // API supports one category
-    }
-
-    if (state.selectedSources.length > 0) {
-        params.append('source', state.selectedSources[0]); // API supports one source
-    }
-
-    // Use simple data endpoints
-    let endpoint;
-    if (state.searchQuery) {
-        endpoint = `/api/search?q=${encodeURIComponent(state.searchQuery)}&limit=50`;
-    } else {
-        endpoint = `/api/data/articles?${params.toString()}`;
-    }
-
-    const data = await fetchAPI(endpoint);
-
-    if (data && data.success) {
-        if (state.searchQuery) {
-            state.articles = data.data.results;
-            state.totalPages = 1; // Search doesn't paginate
-        } else {
-            state.articles = data.data.articles;
-            state.totalPages = data.data.total_pages;
-        }
-
-        renderArticles();
-        renderPagination();
-        updateResultsCount();
-    } else {
+    if (!state.allArticles || state.allArticles.length === 0) {
         showError();
+        return;
     }
+
+    // Client-side filtering
+    let filtered = [...state.allArticles];
+
+    // Filter by category
+    if (state.selectedCategories.length > 0) {
+        filtered = filtered.filter(article =>
+            state.selectedCategories.some(cat => (article.categories || []).includes(cat))
+        );
+    }
+
+    // Filter by source
+    if (state.selectedSources.length > 0) {
+        filtered = filtered.filter(article =>
+            state.selectedSources.includes(article.source)
+        );
+    }
+
+    // Search
+    if (state.searchQuery) {
+        const query = state.searchQuery.toLowerCase();
+        filtered = filtered.filter(article => {
+            const title = (article.title || '').toLowerCase();
+            const summary = (article.summary || '').toLowerCase();
+            const excerpt = (article.excerpt || '').toLowerCase();
+            return title.includes(query) || summary.includes(query) || excerpt.includes(query);
+        });
+    }
+
+    // Paginate
+    const limit = 12;
+    state.totalPages = Math.max(1, Math.ceil(filtered.length / limit));
+    const start = (state.currentPage - 1) * limit;
+    const end = start + limit;
+    state.articles = filtered.slice(start, end);
+
+    renderArticles();
+    renderPagination();
+    updateResultsCount();
 }
 
 function renderArticles() {
