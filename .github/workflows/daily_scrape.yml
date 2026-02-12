@@ -5,8 +5,16 @@ on:
     # Run daily at 8 AM UTC (3 AM EST / 12 AM PST)
     - cron: '0 8 * * *'
 
-  # Allow manual triggering
+  # Allow manual triggering from GitHub Actions tab
   workflow_dispatch:
+
+  # Also run on push to main (optional - helps with testing)
+  push:
+    branches:
+      - main
+    paths:
+      - 'scrapers/**'
+      - '.github/workflows/daily_scrape.yml'
 
 jobs:
   scrape:
