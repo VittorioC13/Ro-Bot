@@ -61,7 +61,7 @@ async function fetchAPI(endpoint) {
 
 // Load Categories
 async function loadCategories() {
-    const data = await fetchAPI('/api/categories');
+    const data = await fetchAPI('/api/data/categories');
 
     if (data && data.success) {
         state.categories = data.data.categories;
@@ -90,7 +90,7 @@ function renderCategories() {
 
 // Load Sources
 async function loadSources() {
-    const data = await fetchAPI('/api/sources');
+    const data = await fetchAPI('/api/data/sources');
 
     if (data && data.success) {
         state.sources = data.data.sources;
@@ -119,7 +119,7 @@ function renderSources() {
 
 // Load Trending
 async function loadTrending() {
-    const data = await fetchAPI('/api/trending?days=7&limit=10');
+    const data = await fetchAPI('/api/data/trending?limit=10');
 
     if (data && data.success) {
         state.trending = data.data.trending_topics;
@@ -162,12 +162,12 @@ async function loadArticles() {
         params.append('source', state.selectedSources[0]); // API supports one source
     }
 
-    // Handle search differently
+    // Use simple data endpoints
     let endpoint;
     if (state.searchQuery) {
         endpoint = `/api/search?q=${encodeURIComponent(state.searchQuery)}&limit=50`;
     } else {
-        endpoint = `/api/articles?${params.toString()}`;
+        endpoint = `/api/data/articles?${params.toString()}`;
     }
 
     const data = await fetchAPI(endpoint);

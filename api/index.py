@@ -19,6 +19,7 @@ from database.models import Base
 from api.articles import articles_bp
 from api.search import search_bp
 from api.admin import admin_bp
+from api.data import data_bp
 
 # Load environment variables
 load_dotenv()
@@ -113,6 +114,7 @@ app.get_db = get_db
 app.register_blueprint(articles_bp, url_prefix='/api')
 app.register_blueprint(search_bp, url_prefix='/api')
 app.register_blueprint(admin_bp, url_prefix='/api')
+app.register_blueprint(data_bp, url_prefix='/api')  # Simple JSON endpoints
 
 
 @app.route('/')
