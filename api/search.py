@@ -12,6 +12,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database.queries import search_articles
 
+# Fallback JSON data loader
+try:
+    from api.json_data import search_articles_json
+    JSON_FALLBACK_AVAILABLE = True
+except ImportError:
+    JSON_FALLBACK_AVAILABLE = False
+
 search_bp = Blueprint('search', __name__)
 
 
@@ -46,16 +53,25 @@ def search():
 
         limit = min(int(request.args.get('limit', 50)), 100)
 
-        db = current_app.get_db()
-
-        articles = search_articles(db, query, limit=limit)
+        # Try database first
+        try:
+            db = current_app.get_db()
+            articles = search_articles(db, query, limit=limit)
+            results = [article.to_dict() for article in articles]
+            db.close()
+        except Exception as db_error:
+            # Fallback to JSON
+            if JSON_FALLBACK_AVAILABLE:
+                results = search_articles_json(query, limit=limit)
+            else:
+                raise db_error
 
         return jsonify({
             'success': True,
             'data': {
                 'query': query,
-                'results': [article.to_dict() for article in articles],
-                'count': len(articles),
+                'results': results,
+                'count': len(results),
                 'limit': limit
             }
         })
@@ -73,6 +89,3 @@ def search():
             'error': 'Internal server error',
             'message': str(e)
         }), 500
-    finally:
-        if 'db' in locals():
-            db.close()

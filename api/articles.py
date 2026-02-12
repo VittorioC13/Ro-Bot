@@ -19,6 +19,19 @@ from database.queries import (
     get_sources_summary
 )
 
+# Fallback JSON data loader
+try:
+    from api.json_data import (
+        get_articles_json,
+        get_categories_json,
+        get_trending_json,
+        get_sources_json,
+        search_articles_json
+    )
+    JSON_FALLBACK_AVAILABLE = True
+except ImportError:
+    JSON_FALLBACK_AVAILABLE = False
+
 articles_bp = Blueprint('articles', __name__)
 
 
@@ -50,19 +63,25 @@ def get_articles():
         date_from = datetime.fromisoformat(date_from_str) if date_from_str else None
         date_to = datetime.fromisoformat(date_to_str) if date_to_str else None
 
-        # Get database session
-        db = current_app.get_db()
-
-        # Get articles
-        result = get_articles_paginated(
-            session=db,
-            page=page,
-            limit=limit,
-            category=category,
-            source=source,
-            date_from=date_from,
-            date_to=date_to
-        )
+        # Try database first
+        try:
+            db = current_app.get_db()
+            result = get_articles_paginated(
+                session=db,
+                page=page,
+                limit=limit,
+                category=category,
+                source=source,
+                date_from=date_from,
+                date_to=date_to
+            )
+            db.close()
+        except Exception as db_error:
+            # Fallback to JSON if database fails
+            if JSON_FALLBACK_AVAILABLE:
+                result = get_articles_json(page=page, limit=limit, category=category, source=source)
+            else:
+                raise db_error
 
         return jsonify({
             'success': True,
@@ -82,9 +101,6 @@ def get_articles():
             'error': 'Internal server error',
             'message': str(e)
         }), 500
-    finally:
-        if 'db' in locals():
-            db.close()
 
 
 @articles_bp.route('/articles/<int:article_id>', methods=['GET'])
@@ -130,16 +146,29 @@ def get_categories():
     Returns list of all categories with article counts
     """
     try:
-        db = current_app.get_db()
-
-        categories = get_all_categories(db)
-
-        return jsonify({
-            'success': True,
-            'data': {
+        # Try database first
+        try:
+            db = current_app.get_db()
+            categories = get_all_categories(db)
+            result = {
                 'categories': [cat.to_dict() for cat in categories],
                 'total': len(categories)
             }
+            db.close()
+        except Exception as db_error:
+            # Fallback to JSON
+            if JSON_FALLBACK_AVAILABLE:
+                categories = get_categories_json()
+                result = {
+                    'categories': categories,
+                    'total': len(categories)
+                }
+            else:
+                raise db_error
+
+        return jsonify({
+            'success': True,
+            'data': result
         })
 
     except Exception as e:
@@ -148,9 +177,6 @@ def get_categories():
             'error': 'Internal server error',
             'message': str(e)
         }), 500
-    finally:
-        if 'db' in locals():
-            db.close()
 
 
 @articles_bp.route('/trending', methods=['GET'])
@@ -168,17 +194,31 @@ def get_trending():
         days = int(request.args.get('days', 7))
         limit = int(request.args.get('limit', 10))
 
-        db = current_app.get_db()
-
-        topics = get_trending_topics(db, days=days, limit=limit)
-
-        return jsonify({
-            'success': True,
-            'data': {
+        # Try database first
+        try:
+            db = current_app.get_db()
+            topics = get_trending_topics(db, days=days, limit=limit)
+            result = {
                 'trending_topics': [topic.to_dict() for topic in topics],
                 'days': days,
                 'total': len(topics)
             }
+            db.close()
+        except Exception as db_error:
+            # Fallback to JSON
+            if JSON_FALLBACK_AVAILABLE:
+                topics = get_trending_json(days=days, limit=limit)
+                result = {
+                    'trending_topics': topics,
+                    'days': days,
+                    'total': len(topics)
+                }
+            else:
+                raise db_error
+
+        return jsonify({
+            'success': True,
+            'data': result
         })
 
     except ValueError as e:
@@ -194,9 +234,6 @@ def get_trending():
             'error': 'Internal server error',
             'message': str(e)
         }), 500
-    finally:
-        if 'db' in locals():
-            db.close()
 
 
 @articles_bp.route('/sources', methods=['GET'])
@@ -207,9 +244,17 @@ def get_sources():
     Returns list of all sources with article counts
     """
     try:
-        db = current_app.get_db()
-
-        sources = get_sources_summary(db)
+        # Try database first
+        try:
+            db = current_app.get_db()
+            sources = get_sources_summary(db)
+            db.close()
+        except Exception as db_error:
+            # Fallback to JSON
+            if JSON_FALLBACK_AVAILABLE:
+                sources = get_sources_json()
+            else:
+                raise db_error
 
         return jsonify({
             'success': True,
@@ -225,6 +270,3 @@ def get_sources():
             'error': 'Internal server error',
             'message': str(e)
         }), 500
-    finally:
-        if 'db' in locals():
-            db.close()
